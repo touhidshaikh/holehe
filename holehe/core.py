@@ -249,7 +249,6 @@ async def maincore():
         export_json(out)
     else:
         print_result(out, args, email, start_time, websites)
-        credit()
 
     # Export results to CSV if specified
     export_csv(out, args, email)
