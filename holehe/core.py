@@ -204,10 +204,19 @@ async def maincore():
                         help="Print a JSON with the results")
     parser.add_argument("-T", "--timeout", type=int, default=10, required=False, dest="timeout",
                         help="Set max timeout value (default 10)")
+    parser.add_argument("-q", "--quite", default=False, required=False, action="store_true", dest="quite",
+                        help="Do not Print Credit")
+    parser.add_argument("-U", "--update", default=False, required=False, action="store_true", dest="update",
+                        help="Do check for latest update.")
 
-    check_update()
     args = parser.parse_args()
-    credit()
+
+    if args.update:
+        check_update()
+
+    if args.quite is False:
+        credit()
+
     email = args.email[0]
 
     if not is_email(email):
