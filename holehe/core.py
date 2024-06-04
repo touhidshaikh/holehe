@@ -47,7 +47,7 @@ def import_submodules(package, recursive=True):
     return results
 
 
-def get_functions(modules, args=None):
+def get_functions(modules,args=None):
     """Transform the modules objects to functions"""
     websites = []
 
@@ -55,7 +55,7 @@ def get_functions(modules, args=None):
         if len(module.split(".")) > 3 :
             modu = modules[module]
             site = module.split(".")[-1]
-            if args is not None and args.nopasswordrecovery:
+            if args is not None and args.nopasswordrecovery==True:
                 if  "adobe" not in str(modu.__dict__[site]) and "mail_ru" not in str(modu.__dict__[site]) and "odnoklassniki" not in str(modu.__dict__[site]) and "samsung" not in str(modu.__dict__[site]):
                     websites.append(modu.__dict__[site])
             else:
@@ -103,19 +103,15 @@ def is_email(email: str) -> bool:
 
     return bool(re.fullmatch(EMAIL_FORMAT, email))
 
-def print_result(data, args, email, start_time, websites):
-    def print_color(text, color, args):
-        if not args.nocolor:
-            return colored(text, color)
+def print_result(data,args,email,start_time,websites):
+    def print_color(text,color,args):
+        if args.nocolor == False:
+            return(colored(text,color))
         else:
-            return text
+            return(text)
 
-    if args.jsonoutput:
-        print(json.dumps(data, indent=4))
-        return
-
-    description = print_color("[+] Email used", "green", args) + "," + print_color(" [-] Email not used", "magenta", args) + "," + print_color(" [x] Rate limit", "yellow", args) + "," + print_color(" [!] Error", "red", args)
-    if not args.noclear:
+    description = print_color("[+] Email used","green",args) + "," + print_color(" [-] Email not used", "magenta",args) + "," + print_color(" [x] Rate limit","yellow",args) + "," + print_color(" [!] Error","red",args)
+    if args.noclear==False:
         print("\033[H\033[J")
     else:
         print("\n")
@@ -124,19 +120,19 @@ def print_result(data, args, email, start_time, websites):
     print("*" * (len(email) + 6))
 
     for results in data:
-        if results["rateLimit"] and not args.onlyused:
-            websiteprint = print_color("[x] " + results["domain"], "yellow", args)
+        if results["rateLimit"] and args.onlyused == False:
+            websiteprint = print_color("[x] " + results["domain"], "yellow",args)
             print(websiteprint)
-        elif "error" in results.keys() and results["error"] and not args.onlyused:
+        elif "error" in results.keys() and results["error"] and args.onlyused == False:
             toprint = ""
             if results["others"] is not None and "Message" in str(results["others"].keys()):
                 toprint = " Error message: " + results["others"]["errorMessage"]
-            websiteprint = print_color("[!] " + results["domain"] + toprint, "red", args)
+            websiteprint = print_color("[!] " + results["domain"] + toprint, "red",args)
             print(websiteprint) 
-        elif not results["exists"] and not args.onlyused:
-            websiteprint = print_color("[-] " + results["domain"], "magenta", args)
+        elif results["exists"] == False and args.onlyused == False:
+            websiteprint = print_color("[-] " + results["domain"], "magenta",args)
             print(websiteprint)
-        elif results["exists"]:
+        elif results["exists"] == True:
             toprint = ""
             if results["emailrecovery"] is not None:
                 toprint += " " + results["emailrecovery"]
@@ -147,108 +143,98 @@ def print_result(data, args, email, start_time, websites):
             if results["others"] is not None and "Date, time of the creation" in str(results["others"].keys()):
                 toprint += " / Date, time of the creation " + results["others"]["Date, time of the creation"]
 
-            websiteprint = print_color("[+] " + results["domain"] + toprint, "green", args)
+            websiteprint = print_color("[+] " + results["domain"] + toprint, "green",args)
             print(websiteprint)
 
     print("\n" + description)
     print(str(len(websites)) + " websites checked in " +
           str(round(time.time() - start_time, 2)) + " seconds")
 
-def export_csv(data, args, email):
+
+def export_csv(data,args,email):
     """Export result to csv"""
-    if args.csvoutput:
+    if args.csvoutput == True:
         now = datetime.now()
         timestamp = datetime.timestamp(now)
         name_file="holehe_"+str(round(timestamp))+"_"+email+"_results.csv"
         with open(name_file, 'w', encoding='utf8', newline='') as output_file:
-            fc = csv.DictWriter(output_file, fieldnames=data[0].keys())
+            fc = csv.DictWriter(output_file,fieldnames=data[0].keys())
             fc.writeheader()
             fc.writerows(data)
         exit("All results have been exported to "+name_file)
 
-async def launch_module(module, email, client, out):
-    data = {'aboutme': 'about.me', 'adobe': 'adobe.com', 'amazon': 'amazon.com', 'anydo': 'any.do', 'archive': 'archive.org', 'armurerieauxerre': 'armurerie-auxerre.com', 'atlassian': 'atlassian.com', 'babeshows': 'babeshows.co.uk', 'badeggsonline': 'badeggsonline.com', 'biosmods': 'bios-mods.com', 'biotechnologyforums': 'biotechnologyforums.com', 'bitmoji': 'bitmoji.com', 'blablacar': 'blablacar.com', 'blackworldforum': 'blackworldforum.com', 'blip': 'blip.fm', 'blitzortung': 'forum.blitzortung.org', 'bluegrassrivals': 'bluegrassrivals.com', 'bodybuilding': 'bodybuilding.com', 'buymeacoffee': 'buymeacoffee.com', 'cambridgemt': 'discussion.cambridge-mt.com', 'caringbridge': 'caringbridge.org', 'chinaphonearena': 'chinaphonearena.com', 'clashfarmer': 'clashfarmer.com', 'codecademy': 'codecademy.com', 'codeigniter': 'forum.codeigniter.com', 'codepen': 'codepen.io', 'coroflot': 'coroflot.com', 'cpaelites': 'cpaelites.com', 'cpahero': 'cpahero.com', 'cracked_to': 'cracked.to', 'crevado': 'crevado.com', 'deliveroo': 'deliveroo.com', 'demonforums': 'demonforums.net', 'devrant': 'devrant.com', 'diigo': 'diigo.com', 'discord': 'discord.com', 'docker': 'docker.com', 'dominosfr': 'dominos.fr', 'ebay': 'ebay.com', 'ello': 'ello.co', 'envato': 'envato.com', 'eventbrite': 'eventbrite.com', 'evernote': 'evernote.com', 'fanpop': 'fanpop.com', 'firefox': 'firefox.com', 'flickr': 'flickr.com', 'freelancer': 'freelancer.com', 'freiberg': 'drachenhort.user.stunet.tu-freiberg.de', 'frontiersin': 'frontiersin.org', 'g2a': 'g2a.com', 'gamespot': 'gamespot.com', 'gamevicio': 'gamevicio.com', 'gearbest': 'gearbest.com', 'genius': 'genius.com', 'git': 'git.com', 'github': 'github.com', 'goodreads': 'goodreads.com', 'gravatar': 'gravatar.com', 'hackforums': 'hackforums.net', 'hackerone': 'hackerone.com', 'hardmob': 'hardmob.com.br', 'hattrick': 'hattrick.org', 'houseparty': 'houseparty.com', 'hubpages': 'hubpages.com', 'hubspot': 'hubspot.com', 'hulu': 'hulu.com', 'ifood': 'ifood.com.br', 'ifunny': 'ifunny.co', 'imdb': 'imdb.com', 'instructables': 'instructables.com', 'intel': 'intel.com', 'italki': 'italki.com', 'jodel': 'jodel.com', 'jsfiddle': 'jsfiddle.net', 'kaggle': 'kaggle.com', 'keybase': 'keybase.io', 'kontentmachine': 'kontentmachine.com', 'lastfm': 'last.fm', 'latex': 'latex.org', 'leagueoflegends': 'leagueoflegends.com', 'legalrc': 'legalrc.biz', 'libgen': 'libgen.is', 'lichess': 'lichess.org', 'linkedin': 'linkedin.com', 'lolzteam': 'lolz.team', 'lyft': 'lyft.com', 'mcmagyar': 'mcmagyar.hu', 'medium': 'medium.com', 'meetup': 'meetup.com', 'minecraft': 'minecraft.net', 'monday': 'monday.com', 'myanimelist': 'myanimelist.net', 'neopets': 'neopets.com', 'newgrounds': 'newgrounds.com', 'nike': 'nike.com', 'nvidia': 'nvidia.com', 'ok': 'ok.ru', 'openfoodfacts': 'openfoodfacts.org', 'orkut': 'orkut.com', 'overclock': 'overclock.net', 'pinterest': 'pinterest.com', 'pokemonshowdown': 'pokemonshowdown.com', 'pornhub': 'pornhub.com', 'prezi': 'prezi.com', 'psn': 'psn.com', 'ravelry': 'ravelry.com', 'redtube': 'redtube.com', 'repl': 'repl.it', 'researchgate': 'researchgate.net', 'roblox': 'roblox.com', 'runescape': 'runescape.com', 'rutube': 'rutube.ru', 'signal': 'signal.org', 'skillshare': 'skillshare.com', 'slashdot': 'slashdot.org', 'slideshare': 'slideshare.net', 'smule': 'smule.com', 'snapchat': 'snapchat.com', 'soundcloud': 'soundcloud.com', 'spotify': 'spotify.com', 'stackexchange': 'stackexchange.com', 'steam': 'steam.com', 'subito': 'subito.it', 'taringa': 'taringa.net', 'telegram': 'telegram.org', 'tripadvisor': 'tripadvisor.com', 'twitch': 'twitch.com', 'twitter': 'twitter.com', 'uber': 'uber.com', 'uberpeople': 'uberpeople.com', 'ulule': 'ulule.com', 'usbank': 'usbank.com', 'venmo': 'venmo.com', 'vk': 'vk.com', 'vsco': 'vsco.co', 'wattpad': 'wattpad.com', 'wayn': 'wayn.com', 'whatsapp': 'whatsapp.com', 'xing': 'xing.com', 'yahoo': 'yahoo.com', 'yandex': 'yandex.ru', 'youporn': 'youporn.com', 'zoom_us': 'zoom.us', 'zotero': 'zotero.org', 'zynga': 'zynga.com'}
-    result = {"domain": data[module.__name__.split(".")[-1]], "exists": False, "rateLimit": False, "emailrecovery": None, "phoneNumber": None, "others": None, "error": False}
+async def launch_module(module,email, client, out):
+    data={'aboutme': 'about.me', 'adobe': 'adobe.com', 'amazon': 'amazon.com', 'anydo': 'any.do', 'archive': 'archive.org', 'armurerieauxerre': 'armurerie-auxerre.com', 'atlassian': 'atlassian.com', 'babeshows': 'babeshows.co.uk', 'badeggsonline': 'badeggsonline.com', 'biosmods': 'bios-mods.com', 'biotechnologyforums': 'biotechnologyforums.com', 'bitmoji': 'bitmoji.com', 'blablacar': 'blablacar.com', 'blackworldforum': 'blackworldforum.com', 'blip': 'blip.fm', 'blitzortung': 'forum.blitzortung.org', 'bluegrassrivals': 'bluegrassrivals.com', 'bodybuilding': 'bodybuilding.com', 'buymeacoffee': 'buymeacoffee.com', 'cambridgemt': 'discussion.cambridge-mt.com', 'caringbridge': 'caringbridge.org', 'chinaphonearena': 'chinaphonearena.com', 'clashfarmer': 'clashfarmer.com', 'codecademy': 'codecademy.com', 'codeigniter': 'forum.codeigniter.com', 'codepen': 'codepen.io', 'coroflot': 'coroflot.com', 'cpaelites': 'cpaelites.com', 'cpahero': 'cpahero.com', 'cracked_to': 'cracked.to', 'crevado': 'crevado.com', 'deliveroo': 'deliveroo.com', 'demonforums': 'demonforums.net', 'devrant': 'devrant.com', 'diigo': 'diigo.com', 'discord': 'discord.com', 'docker': 'docker.com', 'dominosfr': 'dominos.fr', 'ebay': 'ebay.com', 'ello': 'ello.co', 'envato': 'envato.com', 'eventbrite': 'eventbrite.com', 'evernote': 'evernote.com', 'fanpop': 'fanpop.com', 'firefox': 'firefox.com', 'flickr': 'flickr.com', 'freelancer': 'freelancer.com', 'freiberg': 'drachenhort.user.stunet.tu-freiberg.de', 'garmin': 'garmin.com', 'github': 'github.com', 'google': 'google.com', 'gravatar': 'gravatar.com', 'imgur': 'imgur.com', 'instagram': 'instagram.com', 'issuu': 'issuu.com', 'koditv': 'forum.kodi.tv', 'komoot': 'komoot.com', 'laposte': 'laposte.fr', 'lastfm': 'last.fm', 'lastpass': 'lastpass.com', 'mail_ru': 'mail.ru', 'mybb': 'community.mybb.com', 'myspace': 'myspace.com', 'nattyornot': 'nattyornotforum.nattyornot.com', 'naturabuy': 'naturabuy.fr', 'ndemiccreations': 'forum.ndemiccreations.com', 'nextpvr': 'forums.nextpvr.com', 'nike': 'nike.com', 'odnoklassniki': 'ok.ru', 'office365': 'office365.com', 'onlinesequencer': 'onlinesequencer.net', 'parler': 'parler.com', 'patreon': 'patreon.com', 'pinterest': 'pinterest.com', 'plurk': 'plurk.com', 'pornhub': 'pornhub.com', 'protonmail': 'protonmail.ch', 'quora': 'quora.com', 'rambler': 'rambler.ru', 'redtube': 'redtube.com', 'replit': 'replit.com', 'rocketreach': 'rocketreach.co', 'samsung': 'samsung.com', 'seoclerks': 'seoclerks.com', 'sevencups': '7cups.com', 'smule': 'smule.com', 'snapchat': 'snapchat.com', 'soundcloud': 'soundcloud.com', 'sporcle': 'sporcle.com', 'spotify': 'spotify.com', 'strava': 'strava.com', 'taringa': 'taringa.net', 'teamtreehouse': 'teamtreehouse.com', 'tellonym': 'tellonym.me', 'thecardboard': 'thecardboard.org', 'therianguide': 'forums.therian-guide.com', 'thevapingforum': 'thevapingforum.com', 'tumblr': 'tumblr.com', 'tunefind': 'tunefind.com', 'twitter': 'twitter.com', 'venmo': 'venmo.com', 'vivino': 'vivino.com', 'voxmedia': 'voxmedia.com', 'vrbo': 'vrbo.com', 'vsco': 'vsco.co', 'wattpad': 'wattpad.com', 'wordpress': 'wordpress.com', 'xing': 'xing.com', 'xnxx': 'xnxx.com', 'xvideos': 'xvideos.com', 'yahoo': 'yahoo.com','hubspot': 'hubspot.com', 'pipedrive': 'pipedrive.com', 'insightly': 'insightly.com', 'nutshell': 'nutshell.com', 'zoho': 'zoho.com', 'axonaut': 'axonaut.com', 'amocrm': 'amocrm.com', 'nimble': 'nimble.com', 'nocrm': 'nocrm.io', 'teamleader': 'teamleader.eu'}
     try:
-        output = await module.check(email, client)
-        if output["rateLimit"]:
-            result["rateLimit"] = True
-        elif output["exists"]:
-            result["exists"] = True
-            if "emailrecovery" in output.keys():
-                result["emailrecovery"] = output["emailrecovery"]
-            if "phoneNumber" in output.keys():
-                result["phoneNumber"] = output["phoneNumber"]
-            if "others" in output.keys():
-                result["others"] = output["others"]
-    except Exception as e:
-        result["error"] = True
-        result["others"] = str(e)
-        if DEBUG:
-            raise e
+        await module(email, client, out)
+    except Exception:
+        name=str(module).split('<function ')[1].split(' ')[0]
+        out.append({"name": name,"domain":data[name],
+                    "rateLimit": False,
+                    "error": True,
+                    "exists": False,
+                    "emailrecovery": None,
+                    "phoneNumber": None,
+                    "others": None})
+async def maincore():
+    parser= ArgumentParser(description=f"holehe v{__version__}")
+    parser.add_argument("email",
+                    nargs='+', metavar='EMAIL',
+                    help="Target Email")
+    parser.add_argument("--only-used", default=False, required=False,action="store_true",dest="onlyused",
+                    help="Displays only the sites used by the target email address.")
+    parser.add_argument("--no-color", default=False, required=False,action="store_true",dest="nocolor",
+                    help="Don't color terminal output")
+    parser.add_argument("--no-clear", default=False, required=False,action="store_true",dest="noclear",
+                    help="Do not clear the terminal to display the results")
+    parser.add_argument("-NP","--no-password-recovery", default=False, required=False,action="store_true",dest="nopasswordrecovery",
+                    help="Do not try password recovery on the websites")
+    parser.add_argument("-C","--csv", default=False, required=False,action="store_true",dest="csvoutput",
+                    help="Create a CSV with the results")
+    parser.add_argument("-J","--json", default=False, required=False,action="store_true",dest="josnoutput",
+                    help="Print a JSON with the results")
+    parser.add_argument("-T","--timeout", type=int , default=10, required=False,dest="timeout",
+                    help="Set max timeout value (default 10)")
 
-    out.append(result)
+    check_update()
+    args = parser.parse_args()
+    credit()
+    email=args.email[0]
 
+    if not is_email(email):
+        exit("[-] Please enter a target email ! \nExample : holehe email@example.com")
 
-async def maincore(args):
+    # Import Modules
+    modules = import_submodules("holehe.modules")
+    websites = get_functions(modules,args)
+    # Get timeout
+    timeout=args.timeout
+    # Start time
     start_time = time.time()
-    if not args.nocredit:
+    # Def the async client
+    client = httpx.AsyncClient(timeout=timeout)
+    # Launching the modules
+    out = []
+    instrument = TrioProgress(len(websites))
+    trio.lowlevel.add_instrument(instrument)
+    async with trio.open_nursery() as nursery:
+        for website in websites:
+            nursery.start_soon(launch_module, website, email, client, out)
+    trio.lowlevel.remove_instrument(instrument)
+    # Sort by modules names
+    out = sorted(out, key=lambda i: i['name'])
+    # Close the client
+    await client.aclose()
+
+    # Print the result
+    if args.josnoutput is True:
+        pass
+    else:
+        print_result(out,args,email,start_time,websites)
         credit()
 
-    if not is_email(args.email):
-        exit("Email badly formated")
-    email = args.email
-
-    if not args.noupdate:
-        check_update()
-
-    modules = import_submodules("holehe.modules")
-    websites = get_functions(modules, args)
-    if args.output:
-        csv_file = args.output
-    else:
-        csv_file = "holehe.csv"
-
-    headers = {
-        "User-Agent": ua.random,
-        "Connection": "close"
-    }
-
-    async with httpx.AsyncClient(headers=headers, timeout=args.timeout) as client:
-        limit = trio.CapacityLimiter(10)
-        progress = TrioProgress(len(websites), 'Checking email')
-
-        async def worker(module, out):
-            async with limit:
-                async with progress:
-                    await launch_module(module, email, client, out)
-
-        out = []
-        async with trio.open_nursery() as nursery:
-            for module in websites:
-                nursery.start_soon(worker, module, out)
-
-    out = sorted(out, key=lambda x: x["exists"], reverse=True)
-    print_result(out, args, email, start_time, websites)
-    export_csv(out, args, email)
-
+    # Export results
+    export_csv(out,args,email)
 
 def main():
-    parser = ArgumentParser(description="Holehe checks if an email is registered on various websites.")
-    parser.add_argument("email", help="Email address to check")
-    parser.add_argument("--noupdate", help="Do not check for update", action="store_true")
-    parser.add_argument("--nocolor", help="Disable colored output", action="store_true")
-    parser.add_argument("--nocredit", help="Disable credits display", action="store_true")
-    parser.add_argument("--noclear", help="Disable screen clearing before output", action="store_true")
-    parser.add_argument("--csvoutput", help="Export results to CSV", action="store_true")
-    parser.add_argument("--timeout", help="Set timeout for HTTP requests", type=int, default=20)
-    parser.add_argument("--nopasswordrecovery", help="Disable password recovery services checks", action="store_true")
-    parser.add_argument("--onlyused", help="Only display results with used emails", action="store_true")
-    parser.add_argument("--jsonoutput", help="Output results in JSON format", action="store_true")
-    args = parser.parse_args()
-
-    trio.run(maincore, args)
-
-
-if __name__ == '__main__':
-    main()
+    trio.run(maincore)
