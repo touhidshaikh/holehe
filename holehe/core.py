@@ -188,39 +188,39 @@ async def launch_module(module, email, client, out):
         })
 
 async def maincore():
-    parser= ArgumentParser(description=f"holehe v{__version__}")
-    parser.add_argument("email",
-                    nargs='+', metavar='EMAIL',
-                    help="Target Email")
-    parser.add_argument("--only-used", default=False, required=False,action="store_true",dest="onlyused",
-                    help="Displays only the sites used by the target email address.")
-    parser.add_argument("--no-color", default=False, required=False,action="store_true",dest="nocolor",
-                    help="Don't color terminal output")
-    parser.add_argument("--no-clear", default=False, required=False,action="store_true",dest="noclear",
-                    help="Do not clear the terminal to display the results")
-    parser.add_argument("-NP","--no-password-recovery", default=False, required=False,action="store_true",dest="nopasswordrecovery",
-                    help="Do not try password recovery on the websites")
-    parser.add_argument("-C","--csv", default=False, required=False,action="store_true",dest="csvoutput",
-                    help="Create a CSV with the results")
-    parser.add_argument("-T","--timeout", type=int , default=10, required=False,dest="timeout",
-                    help="Set max timeout value (default 10)")
+    parser = ArgumentParser(description=f"holehe v{__version__}")
+    parser.add_argument("email", nargs='+', metavar='EMAIL', help="Target Email")
+    parser.add_argument("--only-used", default=False, required=False, action="store_true", dest="onlyused",
+                        help="Displays only the sites used by the target email address.")
+    parser.add_argument("--no-color", default=False, required=False, action="store_true", dest="nocolor",
+                        help="Don't color terminal output")
+    parser.add_argument("--no-clear", default=False, required=False, action="store_true", dest="noclear",
+                        help="Do not clear the terminal to display the results")
+    parser.add_argument("-NP", "--no-password-recovery", default=False, required=False, action="store_true", dest="nopasswordrecovery",
+                        help="Do not try password recovery on the websites")
+    parser.add_argument("-C", "--csv", default=False, required=False, action="store_true", dest="csvoutput",
+                        help="Create a CSV with the results")
+    parser.add_argument("-J", "--json", default=False, required=False, action="store_true", dest="jsonoutput",
+                        help="Print a JSON with the results")
+    parser.add_argument("-T", "--timeout", type=int, default=10, required=False, dest="timeout",
+                        help="Set max timeout value (default 10)")
 
     check_update()
     args = parser.parse_args()
     credit()
-    email=args.email[0]
+    email = args.email[0]
 
     if not is_email(email):
-        exit("[-] Please enter a target email ! \nExample : holehe email@example.com")
+        exit("[-] Please enter a target email! \nExample: holehe email@example.com")
 
     # Import Modules
     modules = import_submodules("holehe.modules")
-    websites = get_functions(modules,args)
+    websites = get_functions(modules, args)
     # Get timeout
-    timeout=args.timeout
+    timeout = args.timeout
     # Start time
     start_time = time.time()
-    # Def the async client
+    # Define the async client
     client = httpx.AsyncClient(timeout=timeout)
     # Launching the modules
     out = []
@@ -230,15 +230,21 @@ async def maincore():
         for website in websites:
             nursery.start_soon(launch_module, website, email, client, out)
     trio.lowlevel.remove_instrument(instrument)
-    # Sort by modules names
+    # Sort by module names
     out = sorted(out, key=lambda i: i['name'])
     # Close the client
     await client.aclose()
+
     # Print the result
-    print_result(out,args,email,start_time,websites)
-    credit()
-    # Export results
-    export_csv(out,args,email)
+    if args.jsonoutput:
+        export_json(out)
+    else:
+        print_result(out, args, email, start_time, websites)
+        credit()
+
+    # Export results to CSV if specified
+    export_csv(out, args, email)
+
 
 def main():
     trio.run(maincore)
